@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: scoring_pipeline
+    environment:
+      POSTGRES_USER: scoring
+      POSTGRES_PASSWORD: scoring
+      POSTGRES_DB: scoring
+    ports:
+      - "55433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

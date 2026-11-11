@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field
+from datetime import datetime
 
 class Application(BaseModel):
     revolving_utilization: float = Field(ge=0)
@@ -31,3 +32,16 @@ class ScoreResponse(BaseModel):
     decision: str
     threshold: float
     model_version: str
+
+class ApplicationOut(BaseModel):
+    id: int
+    created_at: datetime
+    source: str
+    age: int
+    monthly_income: float | None
+    late_90: int
+    probability_of_default: float
+    decision: str
+    model_version: str
+
+    model_config = {"from_attributes": True}
