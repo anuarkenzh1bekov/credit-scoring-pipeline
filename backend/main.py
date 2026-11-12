@@ -1,10 +1,10 @@
 from fastapi import Depends, FastAPI, HTTPException
-from sqlalchemy import select
+from sqlalchemy import case, func, select
 from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
 from backend.db import Base, engine, get_db
 from backend.models import ApplicationRecord
-from backend.schemas import Application, ApplicationOut, ScoreResponse
+from backend.schemas import Application, ApplicationOut, ScoreResponse, DailyStats, StatsOut
 from src.scoring.model import ScoringModel
 
 Base.metadata.create_all(bind=engine)
@@ -51,3 +51,38 @@ def get_application(app_id: int, db: Session = Depends(get_db)):
     if record is None:
         raise HTTPException(status_code=404, detail="Application not found")
     return record
+
+@app.get("/stats", response_model=StatsOut)
+def stats(db: Session = Depends(get_db)):
+    is_approved = case((ApplicationRecord.decision == "approve", 1), else_=0)
+
+    total, approved, avg_prob = db.execute(
+        select(
+            func.count(ApplicationRecord.id),
+            func.coalesce(func.sum(is_approved), 0),
+            func.avg(ApplicationRecord.probability_of_default),
+        )
+    ).one()
+
+    day = func.date(ApplicationRecord.created_at)
+    rows = db.execute(
+        select(day, func.count(ApplicationRecord.id), func.sum(is_approved))
+        .group_by(day)
+        .order_by(day)
+    ).all()
+
+    daily = [
+        DailyStats(day=d, total=t, approved=a, approval_rate=round(a / t, 3))
+        for d, t, a in rows
+    ]
+
+    return StatsOut(
+        total=total,
+        approved=approved,
+        rejected=total - approved,
+        approval_rate=round(approved / total, 3) if total else 0.0,
+        avg_probability=round(avg_prob, 4) if avg_prob is not None else None,
+        model_version=model.version,
+        threshold=model.threshold,
+        daily=daily,
+    )

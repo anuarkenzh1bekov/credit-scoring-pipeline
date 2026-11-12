@@ -27,3 +27,4 @@ export const getApplications = (decision) =>
   request(`/applications?limit=50${decision ? `&decision=${decision}` : ""}`);
 export const score = (payload) =>
   request("/score", { method: "POST", body: JSON.stringify(payload) });
+export const getStats = () => request("/stats");

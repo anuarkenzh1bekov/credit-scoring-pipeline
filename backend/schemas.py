@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from datetime import datetime
+from datetime import date, datetime
 
 class Application(BaseModel):
     revolving_utilization: float = Field(ge=0)
@@ -45,3 +45,20 @@ class ApplicationOut(BaseModel):
     model_version: str
 
     model_config = {"from_attributes": True}
+
+class DailyStats(BaseModel):
+    day: date
+    total: int
+    approved: int
+    approval_rate: float
+
+
+class StatsOut(BaseModel):
+    total: int
+    approved: int
+    rejected: int
+    approval_rate: float
+    avg_probability: float | None
+    model_version: str
+    threshold: float
+    daily: list[DailyStats]
