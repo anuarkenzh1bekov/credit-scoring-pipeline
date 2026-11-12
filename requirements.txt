@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+sqlalchemy
+psycopg[binary]
+pandas==3.0.2
+numpy
+scikit-learn==1.8.0
+optbinning==1.0.0
+joblib
